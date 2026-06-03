@@ -1,0 +1,32 @@
+# TraceClaw 核心依赖
+# 安装：pip install -r requirements.txt
+
+# CLI 交互
+typer>=0.9.0
+questionary>=2.0.0
+rich>=13.0.0
+prompt_toolkit>=3.0.0
+
+# 环境配置
+python-dotenv>=1.0.0
+
+# LangChain 生态
+langchain-core>=0.2.0,<0.4.0
+langgraph==0.2.60
+langchain>=0.2.0
+langchain-openai>=0.1.0
+
+# LLM 提供商 SDK
+openai>=1.0.0
+anthropic>=0.18.0
+
+# 数据存储
+aiosqlite==0.20.0
+langgraph-checkpoint-sqlite==2.0.0
+
+# 工具支持
+pydantic>=2.0.0
+
+# 飞书集成
+lark-oapi>=1.4.0
+httpx>=0.24.0
