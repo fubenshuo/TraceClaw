@@ -1,6 +1,6 @@
 <div align="center">
 
-![TraceClaw Logo](docs/cyber_logo.png)
+![TraceClaw Logo](docs/trace_logo.png)
 
 # TraceClaw
 
@@ -12,7 +12,7 @@
 [![LangChain](https://img.shields.io/badge/LangChain-1.x-blue.svg)](https://python.langchain.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](tests/)
-[![GitHub](https://img.shields.io/badge/GitHub-@ttguy0707-black.svg?logo=github)](https://github.com/ttguy0707)
+[![GitHub](https://img.shields.io/badge/GitHub-@fubenshuo-black.svg?logo=github)](https://github.com/fubenshuo)
 
 **下一代透明智能体架构** · Next-Gen Transparent Agent Architecture
 
@@ -50,6 +50,7 @@ TraceClaw 支持**OpenClaw 技能**和**Claude Code 技能**，可直接使用�
 | **🛡️ 零信任执行** | help → run 两段式调用，先看说明书再执行 | P0 级事故率降低 80%（50% → 10%）|
 | **⏰ 心跳任务引擎** | 后台独立进程，自动执行定时任务 | 解放双手，复杂任务自动化 |
 | **🖥️ 跨平台支持** | Unix + Windows 双平台自适应，LLM 自主选择命令 | 一套代码，全平台运行 |
+| **📕 飞书集成通信** | 双向实时互通 + 心跳主动推送 + 双线程异步桥接 | Agent 零配置感知消息来源，开箱即用 |
 
 ---
 
@@ -76,6 +77,12 @@ TraceClaw 支持**OpenClaw 技能**和**Claude Code 技能**，可直接使用�
   - 后台独立进程，每秒检查任务队列
   - 支持 daily/weekly/monthly 循环任务
   - 任务持久化存储，重启不丢失
+
+- **飞书集成**
+  - 双向消息通道：飞书 ↔ TraceClaw 实时互通
+  - 心跳通知推送：定时任务到期自动推送到飞书群
+  - 双线程架构：SDK 后台线程 + asyncio 事件桥接
+  - 零配置感知：Agent 自动识别飞书消息来源
 
 ### 🛡️ 安全沙盒
 
@@ -134,7 +141,7 @@ TraceClaw 支持**OpenClaw 技能**和**Claude Code 技能**，可直接使用�
 
 ```bash
 # 克隆项目
-git clone https://github.com/ttguy0707/TraceClaw.git
+git clone https://github.com/fubenshuo/TraceClaw.git
 cd TraceClaw
 
 # 安装依赖并注册命令行工具（一步完成）
@@ -259,6 +266,241 @@ TraceClaw 内置心跳任务系统（Heartbeat），自动在后台执行定时�
 
 > 💡 提示：心跳任务在后台运行，即使不启动主程序也会执行（需单独运行心跳进程）。
 
+### 🔔 飞书集成
+
+TraceClaw 内置飞书（Lark）消息通道，让你的 Agent 可以收发飞书消息、推送定时通知到飞书群。
+
+#### 架构设计
+
+```
+飞书服务器 ←→ SDK 后台线程 ←→ queue.Queue 桥接 ←→ asyncio 事件循环 ←→ task_queue 消息总线
+```
+
+- **SDK 后台线程**：运行飞书长连接 WebSocket，接收消息事件
+- **Queue 桥接层**：线程安全的 `queue.Queue`，将 SDK 线程的消息传递到 asyncio 世界
+- **消息总线汇聚**：飞书消息和键盘输入统一进入 `task_queue`，Agent 无需区分来源
+- **回复通道**：Agent 处理完后，通过飞书 REST API 自动回复到原会话
+
+#### 配置
+
+```bash
+# .env 中添加以下配置
+FEISHU_ENABLED=true                          # 启用飞书集成
+FEISHU_APP_ID=cli_xxxxxxxx                   # 飞书应用 App ID
+FEISHU_APP_SECRET=xxxxxxxx                   # 飞书应用 App Secret
+FEISHU_NOTIFY_CHAT_ID=oc_xxxxxxxx            # (可选) 心跳通知默认群聊 ID
+```
+
+**前置条件：**
+1. 在 [飞书开放平台](https://open.feishu.cn/) 创建企业自建应用
+2. 启用"机器人"能力
+3. 事件订阅选择"长连接"模式，添加 `im.message.receive_v1` 事件
+```
+4. 权限管理添加
+  {
+  "scopes": {
+    "tenant": [
+      "base:app:copy",
+      "base:app:create",
+      "base:app:read",
+      "base:app:update",
+      "base:collaborator:create",
+      "base:collaborator:delete",
+      "base:collaborator:read",
+      "base:dashboard:copy",
+      "base:dashboard:read",
+      "base:field:create",
+      "base:field:delete",
+      "base:field:read",
+      "base:field:update",
+      "base:form:read",
+      "base:form:update",
+      "base:record:create",
+      "base:record:delete",
+      "base:record:read",
+      "base:record:retrieve",
+      "base:record:update",
+      "base:role:create",
+      "base:role:delete",
+      "base:role:read",
+      "base:role:update",
+      "base:table:create",
+      "base:table:delete",
+      "base:table:read",
+      "base:table:update",
+      "base:view:read",
+      "base:view:write_only",
+      "bitable:app",
+      "bitable:app:readonly",
+      "board:whiteboard:node:create",
+      "board:whiteboard:node:delete",
+      "board:whiteboard:node:read",
+      "board:whiteboard:node:update",
+      "contact:contact.base:readonly",
+      "contact:user.base:readonly",
+      "contact:user.employee_id:readonly",
+      "contact:user.employee_number:read",
+      "contact:user.id:readonly",
+      "docs:doc",
+      "docs:doc:readonly",
+      "docs:document.comment:create",
+      "docs:document.comment:read",
+      "docs:document.comment:update",
+      "docs:document.comment:write_only",
+      "docs:document.content:read",
+      "docs:document.media:download",
+      "docs:document.media:upload",
+      "docs:document.subscription",
+      "docs:document.subscription:read",
+      "docs:document:copy",
+      "docs:document:export",
+      "docs:document:import",
+      "docs:event.document_deleted:read",
+      "docs:event.document_edited:read",
+      "docs:event.document_opened:read",
+      "docs:event:subscribe",
+      "docs:permission.member",
+      "docs:permission.member:auth",
+      "docs:permission.member:create",
+      "docs:permission.member:delete",
+      "docs:permission.member:readonly",
+      "docs:permission.member:retrieve",
+      "docs:permission.member:transfer",
+      "docs:permission.member:update",
+      "docs:permission.setting",
+      "docs:permission.setting:read",
+      "docs:permission.setting:readonly",
+      "docs:permission.setting:write_only",
+      "docx:document",
+      "docx:document.block:convert",
+      "docx:document:create",
+      "docx:document:readonly",
+      "drive:drive",
+      "drive:drive.metadata:readonly",
+      "drive:drive.search:readonly",
+      "drive:drive:readonly",
+      "drive:drive:version",
+      "drive:drive:version:readonly",
+      "drive:export:readonly",
+      "drive:file",
+      "drive:file.like:readonly",
+      "drive:file.meta.sec_label.read_only",
+      "drive:file:download",
+      "drive:file:readonly",
+      "drive:file:upload",
+      "drive:file:view_record:readonly",
+      "event:ip_list",
+      "im:app_feed_card:write",
+      "im:biz_entity_tag_relation:read",
+      "im:biz_entity_tag_relation:write",
+      "im:chat",
+      "im:chat.access_event.bot_p2p_chat:read",
+      "im:chat.announcement:read",
+      "im:chat.announcement:write_only",
+      "im:chat.chat_pins:read",
+      "im:chat.chat_pins:write_only",
+      "im:chat.collab_plugins:read",
+      "im:chat.collab_plugins:write_only",
+      "im:chat.managers:write_only",
+      "im:chat.members:bot_access",
+      "im:chat.members:read",
+      "im:chat.members:write_only",
+      "im:chat.menu_tree:read",
+      "im:chat.menu_tree:write_only",
+      "im:chat.moderation:read",
+      "im:chat.tabs:read",
+      "im:chat.tabs:write_only",
+      "im:chat.top_notice:write_only",
+      "im:chat.widgets:read",
+      "im:chat.widgets:write_only",
+      "im:chat:create",
+      "im:chat:delete",
+      "im:chat:moderation:write_only",
+      "im:chat:operate_as_owner",
+      "im:chat:read",
+      "im:chat:readonly",
+      "im:chat:update",
+      "im:datasync.feed_card.time_sensitive:write",
+      "im:message",
+      "im:message.group_at_msg:readonly",
+      "im:message.group_msg",
+      "im:message.p2p_msg:readonly",
+      "im:message.pins:read",
+      "im:message.pins:write_only",
+      "im:message.reactions:read",
+      "im:message.reactions:write_only",
+      "im:message.urgent",
+      "im:message.urgent.status:write",
+      "im:message.urgent:phone",
+      "im:message.urgent:sms",
+      "im:message:readonly",
+      "im:message:recall",
+      "im:message:send_as_bot",
+      "im:message:send_multi_depts",
+      "im:message:send_multi_users",
+      "im:message:send_sys_msg",
+      "im:message:update",
+      "im:resource",
+      "im:tag:read",
+      "im:tag:write",
+      "im:url_preview.update",
+      "im:user_agent:read",
+      "sheets:spreadsheet",
+      "sheets:spreadsheet.meta:read",
+      "sheets:spreadsheet.meta:write_only",
+      "sheets:spreadsheet:create",
+      "sheets:spreadsheet:read",
+      "sheets:spreadsheet:readonly",
+      "sheets:spreadsheet:write_only",
+      "space:document.event:read",
+      "space:document:delete",
+      "space:document:move",
+      "space:document:retrieve",
+      "space:document:shortcut",
+      "space:folder:create",
+      "wiki:member:create",
+      "wiki:member:retrieve",
+      "wiki:member:update",
+      "wiki:node:copy",
+      "wiki:node:create",
+      "wiki:node:move",
+      "wiki:node:read",
+      "wiki:node:retrieve",
+      "wiki:node:update",
+      "wiki:setting:read",
+      "wiki:setting:write_only",
+      "wiki:space:read",
+      "wiki:space:retrieve",
+      "wiki:space:write_only",
+      "wiki:wiki",
+      "wiki:wiki:readonly"
+    ]
+  }
+```
+5. 将应用发布上线（或添加测试用户）
+
+#### 使用示例
+
+```bash
+# 启动 TraceClaw 后，飞书连接自动建立
+traceclaw run
+```
+
+在飞书中 @机器人 发送消息：
+
+```
+# 飞书群聊中
+@TraceClaw 帮我看下现在几点了
+@TraceClaw 每天早上9点提醒我站会
+@TraceClaw 记住我喜欢喝冰美式
+```
+
+Agent 的回复会自动发回飞书群，定时任务到期也会主动推送通知。
+
+#### 消息标识
+
+从飞书收到的消息会带有 `[From Feishu]` 前缀，Agent 的系统 Prompt 已内置飞书感知能力，会自动识别并调整回复策略。
+
 ### 5️⃣ 监控终端
 
 在另一个终端运行：
@@ -336,6 +578,7 @@ traceclaw monitor
 | **沙盒工具** | `traceclaw/core/tools/sandbox_tools.py` | 文件操作 + Shell 执行 |
 | **审计日志** | `traceclaw/core/logger.py` | JSONL 格式事件记录 |
 | **心跳任务** | `traceclaw/core/heartbeat.py` | 定时任务检查与触发 |
+| **飞书集成** | `traceclaw/core/feishu.py` | 飞书双向消息 + 通知推送 |
 
 ### 项目结构
 
@@ -350,6 +593,7 @@ TraceClaw/
 │   │   ├── skill_loader.py       # 动态技能加载
 │   │   ├── logger.py             # 审计日志
 │   │   ├── heartbeat.py          # 心跳任务
+│   │   ├── feishu.py             # 飞书集成
 │   │   └── tools/
 │   │       ├── base.py           # 工具装饰器
 │   │       ├── builtins.py       # 内置工具
@@ -514,15 +758,16 @@ grep "tool_call" logs/local_geek_master.jsonl | tail -20
 ```markdown
 # 用户档案
 
-- **姓名**: Thor Allen
-- **职业**: 程序员
+- **姓名**: Lu Benwei
+- **职业**: Agent开发程序员
 - **偏好**: 
   - 喜欢喝冰美式咖啡
   - 常用 Python 写代码
   - 每天 8 点起床
+  - 喜欢美少女
 - **特殊要求**:
-  - 回答要简洁
-  - 不要使用表情符号
+  - 在每次回答之后加上喵~
+
 ```
 
 ---
@@ -590,11 +835,11 @@ python3 -c "from tests.test_two_phase_skills import run_tests; run_tests()"
 
 | 指标 | 单阶段 | 两阶段 | 提升 |
 |------|--------|--------|------|
-| **安全命中率** | 50.0% | 90.0% | **+40%** |
-| **P0 级事故率** | 50.0% | 10.0% | **-80%** |
-| **平均决策耗时** | 19.33s | 23.88s | +23.5% |
+| **安全命中率** | 50.0% | 95.0% | **+45%** |
+| **P0 级事故率** | 50.0% | 5.0% | **-45%** |
+| **平均决策耗时** | 19.21s | 23.69s | +18.9% |
 
-**结论**：两阶段架构用 23.5% 的时间开销，换来了**事故率从 50% 暴降至 0%**（实际破坏性执行为 0）。
+**结论**：两阶段架构用 18.9% 的时间开销，换来了**事故率从 50% 暴降至 5%**（实际破坏性执行为 0）。
 
 ---
 
@@ -606,7 +851,7 @@ python3 -c "from tests.test_two_phase_skills import run_tests; run_tests()"
 
 ```bash
 # 克隆项目
-git clone https://github.com/ttguy0707/TraceClaw.git
+git clone https://github.com/fubenshuo/TraceClaw.git
 cd TraceClaw
 
 # 创建虚拟环境
@@ -656,7 +901,7 @@ MIT License
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=fubenshuo/TraceClaw&type=Date)](https://star-history.com/#fubenshuo/TraceClaw&Date)
+[![Star History Chart](https://api.star-history.com/chart?repos=fubenshuo/TraceClaw&type=date&legend=top-left)](https://www.star-history.com/?type=date&repos=fubenshuo%2FTraceClaw)
 
 ---
 
