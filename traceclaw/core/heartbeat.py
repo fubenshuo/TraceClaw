@@ -33,6 +33,7 @@ import calendar
 from datetime import datetime, timedelta
 from .config import TASKS_FILE       # tasks.json 的绝对路径
 from .tools.builtins import tasks_lock  # 与 builtins CRUD 共享的线程锁
+from . import feishu                  # 飞书通知
 
 async def pacemaker_loop(task_queue: asyncio.Queue, check_interval: int = 10):
     """
@@ -161,3 +162,25 @@ async def pacemaker_loop(task_queue: asyncio.Queue, check_interval: int = 10):
             )
             # 推入队列后，agent_worker 会将其包装为 HumanMessage 送入 LangGraph
             await task_queue.put(system_msg)
+
+            # ── 飞书推送通知 ──
+            # 优先使用任务级别的 chat_id，fallback 到全局配置
+            chat_id = t.get("feishu_chat_id") or os.getenv("FEISHU_NOTIFY_CHAT_ID", "")
+            feishu_on = feishu.is_enabled()
+            # 无条件诊断：确认变量状态
+            feishu._status(
+                f"Heartbeat: chat_id={'SET' if chat_id else 'EMPTY'} "
+                f"feishu_enabled={feishu_on} "
+                f"task={t['description'][:20]}",
+                "info" if chat_id and feishu_on else "warn",
+            )
+            if chat_id and feishu_on:
+                notify_msg = f"[Task Alert]\n{t['description']}"
+                try:
+                    ok = await feishu.send_to_chat(chat_id, notify_msg)
+                    if ok:
+                        feishu._status(f"Heartbeat sent OK", "ok")
+                    else:
+                        feishu._status(f"Heartbeat send failed (API error)", "error")
+                except Exception as e:
+                    feishu._status(f"Heartbeat send error: {e}", "error")
