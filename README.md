@@ -24,7 +24,7 @@
 
 > 🤖 **你的 AI 在背着你做什么？TraceClaw 让所有行为无所遁形**
 > 
-> 💡 **灵感来源**：受 [OpenClaw](https://github.com/openclaw/openclaw) 的启发，TraceClaw 专注于解决 AI 智能体的透明度和可控性问题。
+> 💡 **灵感来源**：受 [OpenClaw](https://github.com/openclaw/openclaw)和[CyberClaw](https://github.com/ttguy0707/CyberClaw)的启发，TraceClaw 专注于解决 AI 智能体的透明度和可控性问题。
 
 ---
 
@@ -638,6 +638,7 @@ MIT License
 ## 🙏 致谢
 
 - **[OpenClaw](https://github.com/openclaw/openclaw)** - 灵感来源与技能生态
+- **[CyberClaw](https://github.com/ttguy0707/CyberClaw)** - 灵感来源与技能生态
 - **LangChain** - LLM 应用开发框架
 - **LangGraph** - 有状态 Agent 构建
 - **Rich** - 终端美化
@@ -648,14 +649,14 @@ MIT License
 
 ## 📬 联系方式
 
-- **GitHub**: [@ttguy0707](https://github.com/ttguy0707)
-- **邮箱**: thor07@126.com
+- **GitHub**: [@fubenshuo](https://github.com/fubenshuo)
+- **邮箱**: 2395644388@qq.com
 
 ---
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=ttguy0707/TraceClaw&type=Date)](https://star-history.com/#ttguy0707/TraceClaw&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=fubenshuo/TraceClaw&type=Date)](https://star-history.com/#fubenshuo/TraceClaw&Date)
 
 ---
 
@@ -663,6 +664,6 @@ MIT License
 
 **👾 TraceClaw · 下一代透明智能体架构**
 
-Made with ❤️ by [@ttguy0707](https://github.com/ttguy0707)
+Made with ❤️ by [@fubenshuo](https://github.com/fubenshuo)
 
 </div>
