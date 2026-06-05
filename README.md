@@ -899,9 +899,10 @@ MIT License
 
 ---
 
+
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/chart?repos=fubenshuo/TraceClaw&type=date&legend=top-left)](https://www.star-history.com/?type=date&repos=fubenshuo%2FTraceClaw)
+[![Star History Chart](https://api.star-history.com/chart?repos=fubenshuo/TraceClaw&type=date&legend=top-left)](https://www.star-history.com/?repos=fubenshuo%2FTraceClaw&type=date&legend=top-left)
 
 ---
 
