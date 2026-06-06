@@ -898,12 +898,8 @@ MIT License
 - **邮箱**: 2395644388@qq.com
 
 ---
-
-
 ## ⭐ Star History
-
 [![Star History Chart](https://api.star-history.com/svg?repos=fubenshuo/TraceClaw&type=Date)](https://star-history.com/#fubenshuo/TraceClaw&Date)
-
 ---
 
 <div align="center">
