@@ -323,7 +323,7 @@ def create_agent_app(
 
     # 注册两个节点
     workflow.add_node("agent", agent_node)    # 决策节点：组装 prompt → 调用 LLM
-    workflow.add_node("tools", tool_node)      # 执行节点：运行工具函数 → 返回结果
+    workflow.add_node("tools", tool_node)     # 执行节点：运行工具函数 → 返回结果
 
     # ── 边定义（控制流）──
 
